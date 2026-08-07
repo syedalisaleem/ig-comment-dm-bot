@@ -1,0 +1,8 @@
+.venv/
+build/
+dist/
+site/
+__pycache__/
+*.spec
+bot.log
+session.json
