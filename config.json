@@ -2,8 +2,12 @@
   "username": "syedalisaleem",
   "password": "ENV",
   "sessionid": "",
-  "media_url": "https://www.instagram.com/p/Dbv6K5Tgje_/",
-  "message_template": "Hi {username}! Thanks for your comment - check your DMs for details.",
+  "media_urls": [
+    "https://www.instagram.com/p/Dbv6K5Tgje_/"
+  ],
+  "reply_enabled": true,
+  "reply_text": "@{username} thanks for your comment - I've sent you a DM!",
+  "message_template": "Hi {username}! Thanks for your comment on my reel.",
   "keywords": [],
   "ignore_users": [
     "instagram"

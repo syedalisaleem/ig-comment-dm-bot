@@ -6,8 +6,9 @@ Your PC can be off. **No hardware, no cost.**
 ## What happens
 
 1. GitHub starts a Linux VM, logs into Instagram with your sessionid,
-   checks the post for new comments, DMs new commenters, then commits the updated
-   `state.json` back to the repo so nobody is ever DM'd twice.
+   checks all your videos for new comments, replies to each new commenter and
+   DMs them, then commits the updated `state.json` back to the repo so nobody
+   is ever replied or DM'd twice.
 2. When a run finishes it schedules the next run itself (`workflow_dispatch`),
    so it keeps running back-to-back 24/7. The `*/5` cron schedule is only a
    safety net in case a run ever fails to reschedule itself.

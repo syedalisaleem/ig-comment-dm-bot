@@ -29,8 +29,10 @@ CONFIG_TEMPLATE = {
     "username": "YOUR_USERNAME",
     "password": "ENV",
     "sessionid": "",
-    "media_url": "https://www.instagram.com/p/PASTE_POST_SHORTCODE_HERE/",
-    "message_template": "Hi {username}! Thanks for your comment - check your DMs for details.",
+    "media_urls": ["https://www.instagram.com/p/PASTE_POST_SHORTCODE_HERE/"],
+    "reply_enabled": True,
+    "reply_text": "@{username} thanks for your comment - I've sent you a DM!",
+    "message_template": "Hi {username}! Thanks for your comment on my reel.",
     "keywords": [],
     "ignore_users": ["instagram"],
     "poll_interval_seconds": 45,
@@ -79,16 +81,42 @@ def load_config(path):
 def load_state():
     if STATE_PATH.exists():
         try:
-            return json.loads(STATE_PATH.read_text(encoding="utf-8"))
+            return normalize_state(json.loads(STATE_PATH.read_text(encoding="utf-8")))
         except json.JSONDecodeError:
             logger.warning("state.json corrupt, starting fresh")
-    return {"seen_comments": [], "dm_users": [], "dm_timestamps": []}
+    return {"replied_comments": {}, "dm_users": {}, "dm_timestamps": [], "last_run": None}
+
+
+def normalize_state(state):
+    state.setdefault("dm_timestamps", [])
+    state.setdefault("last_run", None)
+    if isinstance(state.get("seen_comments"), list):
+        legacy = state
+        logger.info(
+            "Migrating legacy state (seen_comments=%d, dm_users=%d)",
+            len(legacy.get("seen_comments", [])),
+            len(legacy.get("dm_users", [])),
+        )
+        state = {
+            "replied_comments": {},
+            "dm_users": {},
+            "dm_timestamps": legacy.get("dm_timestamps", []),
+            "last_run": legacy.get("last_run"),
+            "_legacy_seen": legacy.get("seen_comments", []),
+            "_legacy_dm_users": legacy.get("dm_users", []),
+        }
+    state.setdefault("replied_comments", {})
+    state.setdefault("dm_users", {})
+    return state
 
 
 def save_state(state):
-    state["seen_comments"] = state["seen_comments"][-STATE_TRIM:]
-    state["dm_users"] = state["dm_users"][-STATE_TRIM:]
-    STATE_PATH.write_text(json.dumps(state, indent=2), encoding="utf-8")
+    for key in ("replied_comments", "dm_users"):
+        for media_id in state.get(key, {}):
+            state[key][media_id] = state[key][media_id][-STATE_TRIM:]
+    state["dm_timestamps"] = state["dm_timestamps"][-STATE_TRIM:]
+    state["last_run"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    STATE_PATH.write_text(json.dumps(state, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def in_pause_window(cfg):
@@ -148,67 +176,99 @@ def login(cfg, twofa_callback=None):
     return client
 
 
-def resolve_media_url(cfg, config_path):
-    media_url = cfg.get("media_url", "")
-    if "PASTE_POST_SHORTCODE" in media_url or not media_url:
-        media_url = input("Paste the Instagram post/reel URL: ").strip()
-        cfg["media_url"] = media_url
+def media_list(cfg):
+    urls = [u.strip() for u in cfg.get("media_urls", []) if u.strip()]
+    if not urls and cfg.get("media_url"):
+        urls = [cfg["media_url"]]
+    return urls
+
+
+def resolve_media_urls(cfg, config_path):
+    urls = media_list(cfg)
+    if not urls or any("PASTE_POST_SHORTCODE" in u for u in urls):
+        urls = []
+        print("Paste Instagram post/reel URLs, one per line (empty line = done):")
+        while True:
+            url = input().strip()
+            if not url:
+                break
+            urls.append(url)
+        cfg["media_urls"] = urls
+        cfg.pop("media_url", None)
         cfg["password"] = "ENV"
         cfg.pop("_password_from_env", None)
         config_path.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
         cfg["password"] = cfg.pop("_password_from_env", "")
-        logger.info("Saved media_url to %s", config_path)
+        logger.info("Saved media_urls to %s", config_path)
     else:
         cfg["password"] = cfg.pop("_password_from_env", "")
-    return media_url
+    return urls
 
 
 def process_media(client, cfg, state, dry_run):
-    media_id = client.media_pk_from_url(cfg["media_url"])
-    comments = client.media_comments(media_id, amount=0)
-    comments.sort(key=lambda c: c.created_at_utc)
-    logger.info("Fetched %d comments", len(comments))
     sent_this_run = 0
-    for comment in comments:
-        pk = str(comment.pk)
-        if pk in state["seen_comments"]:
-            continue
-        state["seen_comments"].append(pk)
-        save_state(state)
-        if str(comment.user.pk) == str(client.user_id):
-            continue
-        username = comment.user.username
-        if username in cfg.get("ignore_users", []):
-            continue
-        if username in state["dm_users"]:
-            continue
-        keywords = cfg.get("keywords", [])
-        if keywords and not any(k.lower() in comment.text.lower() for k in keywords):
-            continue
-        if count_since(state, 3600) >= cfg["max_dms_per_hour"]:
-            logger.info("Hourly limit (%d/h) reached", cfg["max_dms_per_hour"])
-            return sent_this_run
-        if count_since(state, 86400) >= cfg["max_dms_per_day"]:
-            logger.info("Daily limit (%d/day) reached", cfg["max_dms_per_day"])
-            return sent_this_run
-        if state["dm_timestamps"]:
-            delay = random.randint(cfg["min_delay_seconds"], cfg["max_delay_seconds"])
-            logger.info("Waiting %ds before next DM", delay)
-            time.sleep(delay)
-        text = render_template(cfg["message_template"], username, comment.text)
-        if dry_run:
-            logger.info("[DRY-RUN] would DM @%s: %s", username, text)
-            state["dm_users"].append(username)
-        else:
-            try:
-                client.direct_send(text, user_ids=[comment.user.pk])
-            except DirectMessageRequestsDisabled:
-                logger.warning("@%s has DMs disabled, skipped", username)
-            else:
-                state["dm_timestamps"].append(time.time())
-                logger.info("DM sent to @%s (%s)", username, pk)
-            state["dm_users"].append(username)
-        sent_this_run += 1
+    reply_enabled = cfg.get("reply_enabled", True) and cfg.get("reply_text", "").strip()
+    for url in media_list(cfg):
+        media_id = str(client.media_pk_from_url(url))
+        if state.get("_legacy_seen") is not None:
+            state["replied_comments"][media_id] = state.pop("_legacy_seen")
+            state["dm_users"][media_id] = state.pop("_legacy_dm_users")
+            save_state(state)
+            logger.info("Attached legacy state to media %s", media_id)
+        replied = state["replied_comments"].setdefault(media_id, [])
+        dm_users = state["dm_users"].setdefault(media_id, [])
+        comments = client.media_comments(media_id, amount=0)
+        comments.sort(key=lambda c: c.created_at_utc)
+        logger.info("[%s] Fetched %d comments", media_id, len(comments))
+        for comment in comments:
+            pk = str(comment.pk)
+            if str(comment.user.pk) == str(client.user_id):
+                if pk not in replied:
+                    replied.append(pk)
+                    save_state(state)
+                continue
+            username = comment.user.username
+            if username in cfg.get("ignore_users", []):
+                continue
+            keywords = cfg.get("keywords", [])
+            if keywords and not any(k.lower() in comment.text.lower() for k in keywords):
+                continue
+            if pk in replied and username in dm_users:
+                continue
+            if count_since(state, 3600) >= cfg["max_dms_per_hour"]:
+                logger.info("Hourly limit (%d/h) reached", cfg["max_dms_per_hour"])
+                return sent_this_run
+            if count_since(state, 86400) >= cfg["max_dms_per_day"]:
+                logger.info("Daily limit (%d/day) reached", cfg["max_dms_per_day"])
+                return sent_this_run
+            if state["dm_timestamps"]:
+                delay = random.randint(cfg["min_delay_seconds"], cfg["max_delay_seconds"])
+                logger.info("Waiting %ds before next action", delay)
+                time.sleep(delay)
+            if reply_enabled and pk not in replied:
+                reply_text = render_template(cfg["reply_text"], username, comment.text)
+                try:
+                    client.media_comment(media_id, reply_text, replied_to_comment_id=int(pk))
+                    logger.info("Replied to @%s (%s)", username, pk)
+                except Exception as exc:
+                    logger.warning("Reply to @%s failed: %s", username, exc)
+                replied.append(pk)
+                save_state(state)
+            if username not in dm_users:
+                text = render_template(cfg["message_template"], username, comment.text)
+                if dry_run:
+                    logger.info("[DRY-RUN] would DM @%s: %s", username, text)
+                else:
+                    try:
+                        client.direct_send(text, user_ids=[comment.user.pk])
+                    except DirectMessageRequestsDisabled:
+                        logger.warning("@%s has DMs disabled, skipped", username)
+                    else:
+                        state["dm_timestamps"].append(time.time())
+                        logger.info("DM sent to @%s (%s)", username, pk)
+                dm_users.append(username)
+                save_state(state)
+                sent_this_run += 1
     return sent_this_run
 
 
@@ -249,7 +309,7 @@ def main():
 
     setup_logging()
     cfg = load_config(Path(args.config))
-    cfg["media_url"] = resolve_media_url(cfg, Path(args.config))
+    resolve_media_urls(cfg, Path(args.config))
     state = load_state()
     try:
         client = login(cfg)

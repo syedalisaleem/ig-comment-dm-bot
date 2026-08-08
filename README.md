@@ -20,8 +20,9 @@ Fully free, local Python tool: watches a post/reel and automatically DMs each ne
    - `username` - your Instagram username
    - `password` - your password, or `"ENV"` and set the `IG_PASSWORD` environment variable instead (safer)
    - `sessionid` - optional but recommended: a session cookie from a browser logged into the account (see below). Used first; bypasses Instagram's device-login checks.
-   - `media_url` - link to the post/reel to watch
-   - `message_template` - supports `{username}` and `{comment}` placeholders
+   - `media_urls` - list of post/reel links to watch (as many as you want). Each is checked on every run.
+   - `reply_enabled` / `reply_text` - optionally reply publicly to each new comment before DMing it (default on, supports `{username}` and `{comment}`)
+   - `message_template` - the DM text; supports `{username}` and `{comment}` placeholders
    - `keywords` - leave `[]` to DM every commenter, or list words (e.g. `["price", "info"]`) to only DM matching comments
    - `ignore_users` - usernames to never DM
    - Delay/limit settings - the safety knobs (lower = safer)
@@ -48,7 +49,7 @@ First run asks for login (and 2FA code if enabled) and saves the session to `ses
 
 ## State files
 
-- `state.json` - seen comments, DM'd users, DM timestamps. Never delete it; it prevents double DMs.
+- `state.json` - replied comments and DM'd users per video, DM timestamps. Never delete it; it prevents double replies and double DMs.
 - `bot.log` - full activity log.
 
 ## Long-term use (Windows Task Scheduler)
