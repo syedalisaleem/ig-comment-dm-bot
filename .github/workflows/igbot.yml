@@ -38,16 +38,24 @@ jobs:
         run: |
           git config user.name "igbot"
           git config user.email "igbot@users.noreply.github.com"
-          date -u +"%Y-%m-%d %H:%M:%S UTC" > heartbeat.txt
+          date +%s > heartbeat.txt
           git add -A
           if git diff --cached --quiet; then
             echo "No changes"
             exit 0
           fi
           git commit -m "bot run"
-          git pull --rebase origin main --autostash || true
+          PUSH_URL="origin"
           if [ -n "$GH_PAT" ]; then
-            git push "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git" main
-          else
-            git push origin main
+            PUSH_URL="https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git"
           fi
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin main 2>/dev/null || git rebase --abort 2>/dev/null || true
+            if git push "$PUSH_URL" main; then
+              echo "Pushed (attempt $attempt)"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "Push failed after 3 attempts - will retry next run"
+          exit 0
