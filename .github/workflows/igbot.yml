@@ -46,6 +46,13 @@ jobs:
           git pull --rebase --autostash origin main 2>/dev/null || git rebase --abort 2>/dev/null || true
           git push origin main || true
 
+      - name: Wait before next run
+        run: |
+          INTERVAL=$(python -c "import json;print(json.load(open('config.json')).get('cloud_interval_minutes', 5))")
+          if [ "$INTERVAL" -lt 2 ]; then INTERVAL=2; fi
+          echo "Sleeping ${INTERVAL} minutes to stay under Instagram's radar"
+          sleep $((INTERVAL * 60))
+
       - name: Schedule next run
         env:
           GH_TOKEN: ${{ github.token }}

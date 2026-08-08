@@ -43,6 +43,7 @@ CONFIG_TEMPLATE = {
     "request_delay_range": [2, 6],
     "pause_window": {"start": "02:00", "end": "06:00"},
     "pause_check_minutes": 5,
+    "cloud_interval_minutes": 5,
 }
 
 logger = logging.getLogger("ig_bot")

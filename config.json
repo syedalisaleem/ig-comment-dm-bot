@@ -25,5 +25,6 @@
     "start": "02:00",
     "end": "06:00"
   },
-  "pause_check_minutes": 5
+  "pause_check_minutes": 5,
+  "cloud_interval_minutes": 5
 }
