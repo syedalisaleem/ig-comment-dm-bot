@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IG Comment DM Bot — Free Auto-DM Tool</title>
+<link rel="icon" href="favicon.ico">
+<style>
+  :root {
+    --bg: #0f0f14;
+    --card: #181820;
+    --border: #26262f;
+    --text: #e8e8ee;
+    --muted: #9a9aa8;
+    --grad: linear-gradient(135deg, #405de6, #c13584);
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+    line-height: 1.6;
+  }
+  .wrap { max-width: 960px; margin: 0 auto; padding: 0 20px; }
+  header {
+    text-align: center;
+    padding: 64px 0 40px;
+  }
+  .logo {
+    width: 72px; height: 72px; margin: 0 auto 18px;
+    border-radius: 18px; background: var(--grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 30px; font-weight: 800; color: #fff;
+    box-shadow: 0 8px 30px rgba(193, 53, 132, .35);
+  }
+  h1 { font-size: 40px; letter-spacing: -.5px; }
+  h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; }
+  .tagline { color: var(--muted); font-size: 18px; margin-top: 10px; max-width: 620px; margin-inline: auto; }
+  .btn {
+    display: inline-block; margin-top: 28px; padding: 16px 44px;
+    background: var(--grad); color: #fff; text-decoration: none;
+    font-size: 18px; font-weight: 700; border-radius: 50px;
+    box-shadow: 0 8px 26px rgba(193, 53, 132, .4);
+    transition: transform .15s, box-shadow .15s;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 34px rgba(193, 53, 132, .5); }
+  .meta { color: var(--muted); font-size: 13px; margin-top: 12px; }
+  .pill {
+    display: inline-block; margin: 26px 4px 0; padding: 6px 14px;
+    border: 1px solid var(--border); border-radius: 50px; font-size: 13px; color: var(--muted);
+  }
+  section { padding: 48px 0; }
+  h2 { font-size: 26px; margin-bottom: 24px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 22px;
+  }
+  .card h3 { font-size: 16px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 14px; }
+  .card .icon { font-size: 22px; margin-bottom: 10px; }
+  .steps { counter-reset: step; display: grid; gap: 14px; }
+  .step {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px 22px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .step .n {
+    flex: 0 0 34px; height: 34px; border-radius: 50%;
+    background: var(--grad); color: #fff; font-weight: 700;
+    display: flex; align-items: center; justify-content: center; font-size: 15px;
+  }
+  .step h3 { font-size: 16px; margin-bottom: 4px; }
+  .step p, .step li { color: var(--muted); font-size: 14px; }
+  .step ol { padding-left: 18px; margin-top: 6px; }
+  code {
+    background: #23232d; border: 1px solid var(--border); border-radius: 6px;
+    padding: 2px 7px; font-size: 13px; color: #ffb86b;
+  }
+  .warn {
+    border: 1px solid #6b4a12; background: #241d0d; border-radius: 14px; padding: 20px 22px;
+    color: #e0c08a; font-size: 14px;
+  }
+  .warn strong { color: #ffd27a; }
+  footer { text-align: center; padding: 40px 0 60px; color: var(--muted); font-size: 13px; }
+  @media (max-width: 600px) { h1 { font-size: 30px; } .btn { width: 100%; text-align: center; } }
+</style>
+</head>
+<body>
+
+<header class="wrap">
+  <div class="logo">DM</div>
+  <h1>IG <span>Comment DM</span> Bot</h1>
+  <p class="tagline">Every new comment on your posts gets a public reply plus an automatic DM — instantly turning comments into conversations. Watch multiple videos at once. 100% free, no API keys, no subscriptions.</p>
+  <a class="btn" href="downloads/IGCommentDMBot.exe" download>Download for Windows (25 MB)</a>
+  <p class="meta">Real desktop app with GUI &middot; Windows 10/11 64-bit &middot; No Python needed &middot; v1.2</p>
+  <br>
+  <span class="pill">Auto-reply + auto-DM</span>
+  <span class="pill">Multiple videos</span>
+  <span class="pill">Keyword filter</span>
+  <span class="pill">Rate-limit safe</span>
+  <span class="pill">Fully free</span>
+</header>
+
+<section class="wrap">
+  <h2>How it works</h2>
+  <div class="grid">
+    <div class="card"><div class="icon">🗨️</div><h3>1. Watch your posts</h3><p>Add as many post or reel URLs as you want (one per line). It checks all of them for new comments every ~45 seconds.</p></div>
+    <div class="card"><div class="icon">📨</div><h3>2. Reply, then DM</h3><p>Each new commenter first gets a public reply to their comment from your account, then your custom DM. Support {username} and {comment} placeholders.</p></div>
+    <div class="card"><div class="icon">🛡️</div><h3>3. Stay safe</h3><p>Random delays, hourly/daily caps, pause window, and a memory file so nobody is ever replied or DM'd twice.</p></div>
+    <div class="card"><div class="icon">🔑</div><h3>Keyword mode</h3><p>Only act on comments containing specific words (e.g. "price", "info") — or everyone.</p></div>
+    <div class="card"><div class="icon">👤</div><h3>Your own account</h3><p>Runs locally on your PC with your own login. Nothing is hosted or stored on any server.</p></div>
+    <div class="card"><div class="icon">💸</div><h3>Free forever</h3><p>No paid API, no SaaS, no limits hidden behind a paywall.</p></div>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>Setup (2 minutes)</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="n">1</div>
+      <div>
+        <h3>Open the app</h3>
+        <p>Double-click <code>IGCommentDMBot.exe</code>. A window opens with a <strong>Bot</strong> tab (Start/Stop + live log) and a <strong>Settings</strong> tab.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">2</div>
+      <div>
+        <h3>Fill in Settings</h3>
+        <p>In the Settings tab, set:</p>
+        <ol>
+          <li><code>Username</code> — your Instagram username</li>
+          <li><code>Session ID</code> — your login cookie (see next step)</li>
+          <li><code>Post / Reel URLs</code> — one URL per line, as many as you want (you can add more videos later)</li>
+          <li>Optional: reply text, DM template, keywords, delays and limits</li>
+        </ol>
+        <p>Click <strong>Save Settings</strong> — everything is stored in <code>config.json</code> beside the app.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">3</div>
+      <div>
+        <h3>Get your sessionid</h3>
+        <p>Log into <strong>instagram.com</strong> in Chrome, press <strong>F12</strong> → <strong>Application</strong> tab → <strong>Cookies</strong> → <code>instagram.com</code>, copy the <strong>sessionid</strong> cookie value, and paste it into the app.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="n">4</div>
+      <div>
+        <h3>Press Start Bot</h3>
+        <p>Leave the window open — new commenters get DMs automatically, and the built-in log shows everything that happens. Close the window to stop.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="wrap">
+  <div class="warn">
+    <strong>Please read:</strong> This tool automates actions Instagram's Terms of Service discourage. Use it responsibly on your own account, keep volumes low, and expect a risk of rate-limits or account checks — the built-in limits help reduce that. The default caps (5 DMs/hour, 20/day) are intentionally conservative.
+  </div>
+</section>
+
+<footer class="wrap">
+  IG Comment DM Bot &middot; Free local tool &middot; Your credentials never leave your PC
+</footer>
+
+</body>
+</html>
