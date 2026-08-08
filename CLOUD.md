@@ -29,11 +29,18 @@ Your PC can be off. **No hardware, no cost.**
    - Repo → **Settings** → **Secrets and variables** → **Actions**
    - **New repository secret** → Name: `IG_SESSIONID`
    - Value: your sessionid cookie (same one as before)
-6. Test it now: repo → **Actions** tab → **IG Comment DM Bot** →
+6. Optional but strongly recommended: add `SESSION_JSON_B64` so the bot always
+   uses the same phone identity (looking like a new device every run is a fast
+   way to get flagged for automation). From the folder where you ran the app:
+   - `certutil -encode session.json b64.txt` then copy `b64.txt` contents
+   - Create secret `SESSION_JSON_B64` with that value
+7. Test it now: repo → **Actions** tab → **IG Comment DM Bot** →
    **Run workflow** button → watch the logs. You should see
    `Logged in with sessionid` and `Run finished, sent 0`.
-7. A run is triggered immediately, and after it finishes it schedules the next
+8. A run is triggered immediately, and after it finishes it schedules the next
    one itself — the loop keeps going 24/7 from then on.
+   The interval (default 10 min, min 2) is set by `cloud_interval_minutes`
+   in `config.json` — keep it slow to stay under Instagram's radar.
 
 ## Troubleshooting
 
@@ -45,6 +52,11 @@ Your PC can be off. **No hardware, no cost.**
   chain restarts from there.
 - **"Failed to fetch workflow" when dispatching**: make sure the workflow file
   exists on the `main` branch.
+- **Automation warning from Instagram**: this is a warning — stop the bot
+  immediately and do not run again for 24-48 hours. After a warning, run only
+  ONE instance (cloud OR local, never both), keep `cloud_interval_minutes` at
+  10+, and keep DMs low (2-3/hour). A second warning can lead to a permanent
+  ban. The `SESSION_JSON_B64` device secret reduces the risk significantly.
 - **Workflow paused**: GitHub auto-pauses schedules if a repo is inactive for
   60 days — just go to Actions and re-enable.
 - **Login not possible / blocked**: fall back to running the app on an always-on

@@ -35,15 +35,15 @@ CONFIG_TEMPLATE = {
     "message_template": "Hi {username}! Thanks for your comment on my reel.",
     "keywords": [],
     "ignore_users": ["instagram"],
-    "poll_interval_seconds": 45,
-    "min_delay_seconds": 45,
-    "max_delay_seconds": 120,
-    "max_dms_per_hour": 5,
-    "max_dms_per_day": 20,
-    "request_delay_range": [2, 6],
+    "poll_interval_seconds": 300,
+    "min_delay_seconds": 120,
+    "max_delay_seconds": 300,
+    "max_dms_per_hour": 3,
+    "max_dms_per_day": 10,
+    "request_delay_range": [4, 8],
     "pause_window": {"start": "02:00", "end": "06:00"},
     "pause_check_minutes": 5,
-    "cloud_interval_minutes": 5,
+    "cloud_interval_minutes": 10,
 }
 
 logger = logging.getLogger("ig_bot")
@@ -142,6 +142,12 @@ def login(cfg, twofa_callback=None):
     client.delay_range = cfg.get("request_delay_range", [2, 6])
     sessionid = os.environ.get("IG_SESSIONID") or cfg.get("sessionid", "")
     if sessionid:
+        if SESSION_PATH.exists():
+            try:
+                client.load_settings(SESSION_PATH)
+                logger.info("Reusing saved device identity (%s)", SESSION_PATH.name)
+            except Exception as exc:
+                logger.warning("Could not load saved device identity: %s", exc)
         try:
             client.login_by_sessionid(sessionid)
             client.dump_settings(SESSION_PATH)

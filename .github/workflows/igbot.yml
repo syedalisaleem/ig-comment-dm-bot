@@ -28,6 +28,17 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
+      - name: Restore device identity
+        env:
+          SESSION_JSON_B64: ${{ secrets.SESSION_JSON_B64 }}
+        run: |
+          if [ -n "$SESSION_JSON_B64" ]; then
+            echo "$SESSION_JSON_B64" | base64 -d > session.json
+            echo "Device identity restored"
+          else
+            echo "No device identity secret set"
+          fi
+
       - name: Run bot (once)
         env:
           IG_SESSIONID: ${{ secrets.IG_SESSIONID }}
