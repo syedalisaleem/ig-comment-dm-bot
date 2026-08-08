@@ -1,12 +1,18 @@
 name: IG Comment DM Bot
 
 on:
+  push:
+    branches: [main]
   schedule:
     - cron: "*/5 * * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: igbot
+  cancel-in-progress: false
 
 jobs:
   bot:
@@ -26,14 +32,22 @@ jobs:
           IG_SESSIONID: ${{ secrets.IG_SESSIONID }}
         run: python bot.py --once
 
-      - name: Commit bot state
+      - name: Commit state and heartbeat
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
         run: |
           git config user.name "igbot"
           git config user.email "igbot@users.noreply.github.com"
-          git add state.json
+          date -u +"%Y-%m-%d %H:%M:%S UTC" > heartbeat.txt
+          git add -A
           if git diff --cached --quiet; then
-            echo "State unchanged"
+            echo "No changes"
+            exit 0
+          fi
+          git commit -m "bot run"
+          git pull --rebase origin main --autostash || true
+          if [ -n "$GH_PAT" ]; then
+            git push "https://x-access-token:${GH_PAT}@github.com/${GITHUB_REPOSITORY}.git" main
           else
-            git commit -m "Update bot state [skip ci]"
-            git push
+            git push origin main
           fi
